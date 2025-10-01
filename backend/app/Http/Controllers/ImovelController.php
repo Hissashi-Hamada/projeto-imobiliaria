@@ -8,57 +8,34 @@ use Illuminate\Http\Request;
 class ImovelController extends Controller
 {
     public function index(Request $r) {
-        $q=$r->string('q'); $status=$r->string('status'); $tipo=$r->string('tipo'); $ordem=$r->string('ordem');
-        $per=(int)($r->integer('per_page')->default(12)); $page=(int)($r->integer('page')->default(1));
+    // strings (ok usar string()->toString() ou query())
+    $q      = $r->string('q')->toString();
+    $status = $r->string('status')->toString();
+    $tipo   = $r->string('tipo')->toString();
+    $ordem  = $r->string('ordem')->toString();
 
-        $query=Imovel::query();
-        if($status && $status!=='todos') $query->where('status',$status);
-        if($tipo && $tipo!=='todos')     $query->where('tipo',$tipo);
-        if($q) $query->where(fn($w)=>$w
-            ->where('titulo','like',"%$q%")
-            ->orWhere('endereco','like',"%$q%")
-            ->orWhere('descricao','like',"%$q%")
-        );
+    // inteiros (Laravel 12: default é o 2º argumento)
+    $per  = $r->integer('per_page', 12);
+    $page = $r->integer('page', 1);
 
-        if($ordem==='menor-preco')      $query->orderBy('preco','asc');
-        elseif($ordem==='maior-preco')  $query->orderBy('preco','desc');
-        else                            $query->orderBy('created_at','desc');
+    $query = Imovel::query();
 
-        return response()->json($query->paginate($per,['*'],'page',$page));
+    if ($status && $status !== 'todos') $query->where('status', $status);
+    if ($tipo && $tipo !== 'todos')     $query->where('tipo', $tipo);
+
+    if ($q) {
+        $query->where(function($w) use ($q) {
+            $w->where('titulo', 'like', "%{$q}%")
+                ->orWhere('endereco', 'like', "%{$q}%")
+                ->orWhere('descricao', 'like', "%{$q}%");
+        });
     }
 
-    public function show(Imovel $imovel){ return response()->json($imovel); }
+    if ($ordem === 'menor-preco')      $query->orderBy('preco', 'asc');
+    elseif ($ordem === 'maior-preco')  $query->orderBy('preco', 'desc');
+    else                               $query->orderBy('created_at', 'desc');
 
-    public function store(Request $r){
-        $data=$r->validate([
-            'titulo'=>'required|string|max:255',
-            'endereco'=>'nullable|string|max:255',
-            'descricao'=>'nullable|string',
-            'tipo'=>'required|in:casa,terreno,apartamento',
-            'status'=>'required|in:venda,aluguel',
-            'preco'=>'required|integer|min:0',
-            'imagens'=>'array','imagens.*'=>'string'
-        ]);
-        $imovel=Imovel::create($data);
-        return response()->json($imovel,201);
-    }
+    return response()->json($query->paginate($per, ['*'], 'page', $page));
+}
 
-    public function update(Request $r, Imovel $imovel){
-        $data=$r->validate([
-            'titulo'=>'sometimes|string|max:255',
-            'endereco'=>'sometimes|nullable|string|max:255',
-            'descricao'=>'sometimes|nullable|string',
-            'tipo'=>'sometimes|in:casa,terreno,apartamento',
-            'status'=>'sometimes|in:venda,aluguel',
-            'preco'=>'sometimes|integer|min:0',
-            'imagens'=>'sometimes|array','imagens.*'=>'string'
-        ]);
-        $imovel->update($data);
-        return response()->json($imovel);
-    }
-
-    public function destroy(Imovel $imovel){
-        $imovel->delete();
-        return response()->json(['ok'=>true]);
-    }
 }

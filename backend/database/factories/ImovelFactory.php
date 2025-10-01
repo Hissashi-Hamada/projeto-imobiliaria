@@ -2,30 +2,25 @@
 
 namespace Database\Factories;
 
-use App\Models\Imovel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Imovel>
- */
 class ImovelFactory extends Factory
 {
-    protected $model = Imovel::class;
-
     public function definition(): array
     {
+        $tipos = ['casa','terreno','apartamento'];
+        $status = ['venda','aluguel'];
+
         return [
-            'titulo' => $this->faker->sentence(3),
+            'titulo' => $this->faker->streetName().' - '.$this->faker->city(),
             'endereco' => $this->faker->address(),
-            'descricao' => $this->faker->paragraph(),
-            'tipo' => $this->faker->randomElement(['casa', 'terreno', 'apartamento']),
-            'status' => $this->faker->randomElement(['venda', 'aluguel']),
-            'preco' => $this->faker->numberBetween(10000, 1000000),
-            'imagens' => $this->faker->randomElements([
-                $this->faker->imageUrl(),
-                $this->faker->imageUrl(),
-                $this->faker->imageUrl(),
-            ], $this->faker->numberBetween(0, 3)),
+            'descricao' => $this->faker->sentence(12),
+            'tipo' => $this->faker->randomElement($tipos),
+            'status' => $this->faker->randomElement($status),
+            'preco' => $this->faker->numberBetween(90000, 900000) * 100, // centavos
+            'imagens' => [$this->faker->imageUrl(640, 480, 'house', true)],
+            'created_at' => $this->faker->dateTimeBetween('-60 days', 'now'),
+            'updated_at' => now(),
         ];
     }
 }
