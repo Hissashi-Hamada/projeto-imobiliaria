@@ -30,25 +30,27 @@ export default function Vitrine(){
 
   return (
     <section className="vitrine">
-      <header className="controls">
-        <input placeholder="Buscar..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-        <select value={status} onChange={e=>setStatus(e.target.value)}>
-          <option value="todos">Todos</option>
-          <option value="venda">Venda</option>
-          <option value="aluguel">Aluguel</option>
-        </select>
-        <select value={tipo} onChange={e=>setTipo(e.target.value)}>
-          <option value="todos">Todos</option>
-          <option value="casa">Casa</option>
-          <option value="terreno">Terreno</option>
-          <option value="apartamento">Apartamento</option>
-        </select>
-        <select value={ordem} onChange={e=>setOrdem(e.target.value)}>
-          <option value="recente">Mais recentes</option>
-          <option value="menor-preco">Menor preço</option>
-          <option value="maior-preco">Maior preço</option>
-        </select>
-      </header>
+<header className="controls">
+  <input placeholder="Buscar por título, endereço..." value={busca} onChange={e=>setBusca(e.target.value)}/>
+  <select value={status} onChange={e=>setStatus(e.target.value)}>
+    <option value="todos">Negócio (todos)</option>
+    <option value="venda">Venda</option>
+    <option value="aluguel">Aluguel</option>
+  </select>
+  <select value={tipo} onChange={e=>setTipo(e.target.value)}>
+    <option value="todos">Tipo (todos)</option>
+    <option value="casa">Casa</option>
+    <option value="terreno">Terreno</option>
+    <option value="apartamento">Apartamento</option>
+  </select>
+  <select value={ordem} onChange={e=>setOrdem(e.target.value)}>
+    <option value="recente">Mais recentes</option>
+    <option value="menor-preco">Menor preço</option>
+    <option value="maior-preco">Maior preço</option>
+  </select>
+  <button className="btn-primary" onClick={()=>setPage(1)}>Pesquisar</button> 
+</header>
+
 
       {loading && <p>Carregando…</p>}
       {err && <p style={{color:"crimson"}}>{err}</p>}
