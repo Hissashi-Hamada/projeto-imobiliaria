@@ -7,30 +7,30 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller {
     public function register(Request $r){
-        $r->validate([
+    $data = $r->validate([
         'name'=>'required|string|max:255',
-        'email'=>'required|email|unique:users',
-        'password'=>'required|string|min:8'
-        ]);
-        $user = User::create([
-        'name'=>$r->name, 'email'=>$r->email, 'password'=>Hash::make($r->password)
-        ]);
-        $token = $user->createToken('web')->plainTextToken;
-        return response()->json(['user'=>$user,'token'=>$token]);
-    }
+        'email'=>'required|email|unique:users,email',
+        'password'=>'required|string|min:8',
+    ]);
 
-    public function login(Request $r){
-        $r->validate(['email'=>'required|email','password'=>'required']);
-        $user = User::where('email',$r->email)->first();
-        if (!$user || !Hash::check($r->password, $user->password)) {
-        throw ValidationException::withMessages(['email'=>['Credenciais inválidas.']]);
-        }
-        $token = $user->createToken('web')->plainTextToken;
-        return response()->json(['user'=>$user,'token'=>$token]);
-    }
+    $user = \App\Models\User::create([
+        'name' => $data['name'],
+        'email'=> $data['email'],
+        'password'=> bcrypt($data['password']),
+    ]);
 
-    public function logout(Request $r){
-        $r->user()->currentAccessToken()->delete();
-        return response()->json(['ok'=>true]);
+    $token = $user->createToken('web')->plainTextToken;
+    return response()->json(['user'=>$user,'token'=>$token], 201);
+}
+
+public function login(Request $r){
+    $r->validate(['email'=>'required|email','password'=>'required']);
+    $user = \App\Models\User::where('email',$r->email)->first();
+    if(!$user || !\Illuminate\Support\Facades\Hash::check($r->password, $user->password)){
+        return response()->json(['message'=>'Credenciais inválidas'], 422);
     }
+    $token = $user->createToken('web')->plainTextToken;
+    return ['user'=>$user,'token'=>$token];
+}
+
 }

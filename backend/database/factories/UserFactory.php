@@ -1,44 +1,30 @@
 <?php
 
-namespace Database\Factories;
-
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Models\Imovel;
+use App\Models\User;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
- */
-class UserFactory extends Factory
-{
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
+class ImovelFactory extends Factory {
+    protected $model = Imovel::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
-    {
+    public function definition(): array {
+        $titulo = $this->faker->streetName().' '.$this->faker->buildingNumber();
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'titulo' => $titulo,
+            'slug' => Str::slug($titulo.'-'.$this->faker->unique()->numberBetween(1000,9999)),
+            'descricao' => $this->faker->paragraph(3),
+            'tipo' => $this->faker->randomElement(['casa','apartamento','terreno','comercial']),
+            'status' => $this->faker->randomElement(['venda','aluguel']),
+            'preco_centavos' => $this->faker->numberBetween(90000, 2500000)*100,
+            'quartos' => $this->faker->numberBetween(0,5),
+            'suites' => $this->faker->numberBetween(0,3),
+            'banheiros' => $this->faker->numberBetween(1,4),
+            'vagas' => $this->faker->numberBetween(0,3),
+            'cidade' => 'São Paulo',
+            'bairro' => $this->faker->streetName(),
+            'logradouro' => $this->faker->streetAddress(),
+            'user_id' => User::factory(), // cria dono junto
         ];
-    }
-
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
     }
 }
