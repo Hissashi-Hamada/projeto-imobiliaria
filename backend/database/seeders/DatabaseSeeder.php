@@ -3,20 +3,19 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use App\Models\Imovel;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // admin
-        $admin = \App\Models\User::firstOrCreate(
+        $admin = User::firstOrCreate(
             ['email' => 'admin@imobiliaria.test'],
-            ['name' => 'Admin', 'password' => bcrypt('Admin@123'), 'role' => 'admin']
+            ['name' => 'Admin Demo', 'password' => Hash::make('Demo@12345')]
         );
 
-        // alguns imóveis
-        \App\Models\Imovel::factory()->count(20)->create([
-            'user_id' => $admin->id,
-        ]);
+        Imovel::factory(20)->create(['user_id' => $admin->id]);
     }
 }

@@ -35,7 +35,7 @@ return new class extends Migration {
             $t->decimal('lng',10,7)->nullable();
 
             $t->timestamp('published_at')->nullable();
-            $t->foreignId('user_id')->constrained('users'); // dono/corretor
+            $t->foreignId('user_id')->constrained('users')->cascadeOnDelete(); // dono/corretor
             $t->timestamps();
         });
     }
