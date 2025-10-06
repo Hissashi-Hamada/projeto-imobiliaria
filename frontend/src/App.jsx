@@ -14,7 +14,7 @@ export default function App(){
         <Route path="/" element={<Navigate to="/imoveis" replace/>}/>
         <Route path="/imoveis" element={<Vitrine/>}/>
         <Route path="/imoveis/:id" element={<ImovelDetalhe/>}/>
-        <Route path="/profile" element={<Profile/>}/>
+        <Route path="/profile" element={<Profile />} />
         <Route path="/register" element={<Register/>}/>
         <Route path="/login" element={<Login/>}/>
       </Routes>

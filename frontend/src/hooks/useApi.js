@@ -1,4 +1,4 @@
-const baseURL = "http://127.0.0.1:8000/api"; // mantém seus endpoints
+const baseURL = "http://127.0.0.1:8000/api";
 
 async function req(path, opts = {}) {
     const token = localStorage.getItem("token");
@@ -16,7 +16,6 @@ async function req(path, opts = {}) {
     return res.status === 204 ? null : res.json();
 }
 
-// Export ÚNICO e no TOPO do módulo (sem chaves antes)
 export default function useApi() {
     return {
         // auth

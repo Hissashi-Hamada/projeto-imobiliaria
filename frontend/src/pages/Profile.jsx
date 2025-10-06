@@ -1,146 +1,258 @@
 import { useEffect, useState } from "react";
 import useApi from "@/hooks/useApi";
+import "@/styles/global.css";
 
-export default function Profile(){
-const api = useApi();
+export default function Profile() {
+  const api = useApi();
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [ok, setOk] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
-const [loading, setLoading] = useState(true);
-const [err, setErr] = useState("");
-const [ok, setOk] = useState("");
-
-const [form, setForm] = useState({
+  const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
     password: "",
     password_confirmation: "",
-});
+    avatar: null, // arquivo de imagem
+  });
 
-    useEffect(() => {
+  useEffect(() => {
     (async () => {
-        try {
-        const me = await api.profile(); // GET /api/profile (precisa token no localStorage)
+      try {
+        const me = await api.profile();
         setForm(f => ({
-            ...f,
-            name:  me.name  ?? "",
-            email: me.email ?? "",
-            phone: me.phone ?? "",
+          ...f,
+          name: me.name ?? "",
+          email: me.email ?? "",
+          phone: me.phone ?? "",
         }));
-        } catch (e) {
-            setErr("Faça login para acessar o perfil.");
-        } finally {
-            etLoading(false);
-        }
+        if (me.avatar) setAvatarPreview(me.avatar);
+      } catch (e) {
+        setErr("Faça login para acessar o perfil.");
+      } finally {
+        setLoading(false);
+      }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+  }, []);
 
-    function onChange(e){
+  function onChange(e) {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
-    }
+  }
 
-    async function onSubmit(e){
+  function onFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setForm(f => ({ ...f, avatar: file }));
+    setAvatarPreview(URL.createObjectURL(file));
+  }
+
+  async function onSubmit(e) {
     e.preventDefault();
-    setErr(""); setOk("");
+    setErr("");
+    setOk("");
 
-    if (form.password && form.password !== form.password_confirmation){
-        return setErr("As senhas não coincidem.");
+    if (form.password && form.password !== form.password_confirmation) {
+      setErr("As senhas não coincidem.");
+      return;
     }
 
     try {
-        const payload = {
-        name: form.name,
-        phone: form.phone,
-        };
-      if (form.email)    payload.email    = form.email;     // permitir trocar email (opcional)
-      if (form.password) payload.password = form.password;  // só envia se quiser trocar senha
+      const fd = new FormData();
+      fd.append("name", form.name);
+      fd.append("email", form.email);
+      fd.append("phone", form.phone);
+      if (form.password) fd.append("password", form.password);
+      if (form.avatar) fd.append("avatar", form.avatar);
 
-      await api.updateProfile(payload); // PUT /api/profile
-        setOk("Perfil atualizado com sucesso!");
-      setForm(f => ({ ...f, password:"", password_confirmation:"" })); // limpa campos de senha
+      await api.updateProfile(fd);
+      setOk("Perfil atualizado com sucesso!");
+      setForm(f => ({ ...f, password: "", password_confirmation: "" }));
     } catch (e2) {
-        setErr(e2.message || "Erro ao atualizar perfil.");
+      setErr(e2.message || "Erro ao atualizar perfil.");
     }
-}
+  }
 
-    if (loading) return <div style={{padding:"1rem"}}>Carregando...</div>;
+  if (loading)
+    return <div style={{ textAlign: "center", padding: "3rem" }}>Carregando...</div>;
 
-    return (
-    <div style={{maxWidth:720, margin:"18px auto", padding:"0 16px"}}>
-        <h2 style={{margin:"8px 0 18px"}}>Meu Perfil</h2>
+  return (
+    <div
+      className="auth-page"
+      style={{
+        display: "grid",
+        placeItems: "center",
+        minHeight: "calc(100vh - 64px)",
+        padding: "1rem",
+      }}
+    >
+      <div
+        className="card"
+        style={{
+          width: "min(640px, 96vw)",
+          background: "#fff",
+          border: "1px solid var(--border)",
+          borderRadius: "16px",
+          boxShadow: "var(--shadow)",
+          padding: "1.5rem 1.75rem",
+        }}
+      >
+        <h2
+          style={{
+            marginTop: 0,
+            marginBottom: ".25rem",
+            fontFamily: "Poppins, Inter, sans-serif",
+            color: "var(--primary)",
+          }}
+        >
+          Meu Perfil
+        </h2>
+        <p style={{ marginTop: 0, color: "var(--muted)" }}>
+          Edite suas informações e foto de perfil.
+        </p>
 
-        {err && <div style={{color:"crimson", marginBottom:10}}>{err}</div>}
-        {ok  && <div style={{color:"seagreen", marginBottom:10}}>{ok}</div>}
+        {err && <p style={{ color: "crimson" }}>{err}</p>}
+        {ok && <p style={{ color: "seagreen" }}>{ok}</p>}
 
-    <form onSubmit={onSubmit} className="form" style={{display:"grid", gap:12}}>
-        <div className="mb-3">
+        <form onSubmit={onSubmit} id="profileForm" className="form">
+          {/* Avatar */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              marginBottom: "1rem",
+            }}
+          >
+            <div
+              style={{
+                width: 120,
+                height: 120,
+                borderRadius: "50%",
+                overflow: "hidden",
+                border: "3px solid var(--primary)",
+                marginBottom: 10,
+              }}
+            >
+              <img
+                src={
+                  avatarPreview ||
+                  "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                }
+                alt="avatar"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            </div>
+            <label
+              htmlFor="avatar"
+              style={{
+                background: "var(--primary)",
+                color: "#fff",
+                padding: "6px 14px",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              Trocar foto
+            </label>
+            <input
+              type="file"
+              id="avatar"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={onFileChange}
+            />
+          </div>
+
+          {/* Campos */}
+          <div className="mb-3">
             <label>Nome</label>
             <input
-                name="name"
-                value={form.name}
-                onChange={onChange}
-                className="form-control"
-                style={{height:44, width:"100%"}}
-                required
+              name="name"
+              className="form-control"
+              placeholder="Seu nome completo"
+              value={form.name}
+              onChange={onChange}
+              required
+              style={{ width: "100%", height: 52, fontSize: 16, borderRadius: 12 }}
             />
-        </div>
+          </div>
 
-        <div className="mb-3">
+          <div className="mb-3">
             <label>Email</label>
             <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={onChange}
-                className="form-control"
-                style={{height:44, width:"100%"}}
+              type="email"
+              name="email"
+              className="form-control"
+              placeholder="voce@exemplo.com"
+              value={form.email}
+              onChange={onChange}
+              style={{ width: "100%", height: 52, fontSize: 16, borderRadius: 12 }}
             />
-        </div>
+          </div>
 
-        <div className="mb-3">
+          <div className="mb-3">
             <label>Telefone</label>
             <input
-                name="phone"
-                value={form.phone}
-                onChange={onChange}
-                className="form-control"
-                placeholder="(11) 90000-0000"
-                style={{height:44, width:"100%"}}
+              name="phone"
+              className="form-control"
+              placeholder="(11) 90000-0000"
+              value={form.phone}
+              onChange={onChange}
+              style={{ width: "100%", height: 52, fontSize: 16, borderRadius: 12 }}
             />
-        </div>
+          </div>
 
-        <hr style={{margin:"6px 0 6px"}} />
+          <hr style={{ margin: "1.2rem 0" }} />
 
-        <div className="mb-3">
-            <label>Nova senha (opcional)</label>
+          <div className="mb-3">
+            <label>Nova Senha (opcional)</label>
             <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={onChange}
-                className="form-control"
-                style={{height:44, width:"100%"}}
-                placeholder="Deixe vazio para não alterar"
+              type="password"
+              name="password"
+              className="form-control"
+              placeholder="Deixe em branco para não alterar"
+              value={form.password}
+              onChange={onChange}
+              style={{ width: "100%", height: 52, fontSize: 16, borderRadius: 12 }}
             />
-        </div>
+          </div>
 
-        <div className="mb-3">
-            <label>Confirmar nova senha</label>
+          <div className="mb-3">
+            <label>Confirmar Nova Senha</label>
             <input
-                type="password"
-                name="password_confirmation"
-                value={form.password_confirmation}
-                onChange={onChange}
-                className="form-control"
-                style={{height:44, width:"100%"}}
+              type="password"
+              name="password_confirmation"
+              className="form-control"
+              value={form.password_confirmation}
+              onChange={onChange}
+              placeholder="Repita a nova senha"
+              style={{ width: "100%", height: 52, fontSize: 16, borderRadius: 12 }}
             />
-        </div>
+          </div>
 
-            <button type="submit" className="btn-primary" style={{height:44}}>
-                Salvar alterações
-            </button>
+          <button
+            type="submit"
+            className="btn-primary"
+            style={{
+              width: "100%",
+              height: 44,
+              marginTop: ".5rem",
+              borderRadius: 10,
+            }}
+          >
+            Salvar Alterações
+          </button>
         </form>
+      </div>
     </div>
-);
+  );
 }
