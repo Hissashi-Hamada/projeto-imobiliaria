@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import useApi from "@/hooks/useApi";
+import { useNavigate } from "react-router-dom";
 import "@/styles/global.css";
 
-/** Reaproveita o mesmo inputStyle do Register */
 const inputStyle = {
 width: "100%",
 height: 52,
@@ -13,9 +11,10 @@ border: "1px solid #bbb",
 padding: "0 12px",
 };
 
+const API_URL = "http://localhost:8000"; // Laravel (php artisan serve --port=8000)
+
 export default function Login() {
-const api = useApi();
-const nav = useNavigate();
+    const nav = useNavigate();
 
 const [form, setForm] = useState({ email: "", password: "" });
 const [showPw, setShowPw] = useState(false);
@@ -31,21 +30,49 @@ async function onSubmit(e) {
     e.preventDefault();
     setErr("");
     setLoading(true);
+
     try {
-      // Se seu useApi() tiver api.login, use:
-    if (api.login) {
-        await api.login({ email: form.email, password: form.password });
-    } else {
-        // >>> fallback caso seu hook não tenha login():
-        // import { api as axiosApi, ensureCsrf } from "../api";
-        // await ensureCsrf();
-        // await axiosApi.post("/login", { email: form.email, password: form.password });
+      // 1) Handshake Sanctum (gera cookie XSRF)
+        await fetch(`${API_URL}/sanctum/csrf-cookie`, {
+        method: "GET",
+        credentials: "include",
+        });
+
+      // 2) POST /login (rota web, sem /api)
+        const resp = await fetch(`${API_URL}/login`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify({
+            email: form.email,
+            password: form.password,
+        }),
+    });
+
+    if (!resp.ok) {
+        if (resp.status === 422) {
+            const data = await resp.json().catch(() => ({}));
+            const firstError =
+                data?.errors && Object.values(data.errors)[0]?.[0]
+                    ? Object.values(data.errors)[0][0]
+                    : "Email ou senha inválidos.";
+            throw new Error(firstError);
         }
-      nav("/imoveis"); // redireciona após login
+        if (resp.status === 419) {
+            throw new Error("Sessão expirada (CSRF). Tente novamente.");
+        }
+        throw new Error(`Erro ${resp.status}`);
+    }
+
+      // sessão fica no cookie; não usa localStorage
+        nav("/imoveis");
     } catch (e2) {
-setErr(e2.message || "Email ou senha inválidos.");
+        setErr(e2.message || "Email ou senha inválidos.");
     } finally {
-setLoading(false);
+        setLoading(false);
     }
 }
 
@@ -63,14 +90,14 @@ return (
             borderRadius: "16px",
             boxShadow: "var(--shadow)",
             padding: "1.5rem 1.75rem",
-        }}>
-
+        }}
+    >
         <h2 style={{ marginTop: 0, marginBottom: ".25rem" }}>Entrar</h2>
         <p style={{ marginTop: 0, color: "var(--muted)" }}>
             Acesse sua conta para salvar favoritos e falar com o vendedor.
         </p>
 
-        <form onSubmit={onSubmit} className="form">
+        <form onSubmit={onSubmit} className="form" autoComplete="on">
         <div className="mb-3">
             <label>Email</label>
             <input
@@ -81,6 +108,7 @@ return (
                 onChange={onChange}
                 required
                 style={inputStyle}
+                autoComplete="email"
             />
         </div>
 
@@ -95,6 +123,7 @@ return (
                 onChange={onChange}
                 required
                 style={inputStyle}
+                autoComplete="current-password"
             />
             <button
                 type="button"
@@ -109,27 +138,25 @@ return (
                     color: "var(--primary)",
                     cursor: "pointer",
                 }}
-                aria-label={showPw ? "Ocultar senha" : "Mostrar senha"}>
-
+                aria-label={showPw ? "Ocultar senha" : "Mostrar senha"}
+                >
                 {showPw ? "Ocultar" : "Mostrar"}
             </button>
+            </div>
         </div>
-    </div>
 
-        {err && <p style={{ color: "crimson", marginTop: ".25rem" }}>{err}</p>}
+            {err && <p style={{ color: "crimson", marginTop: ".25rem" }}>{err}</p>}
 
-        <button
+            <button
             type="submit"
             className="btn-primary"
             style={{ width: "100%", height: 44, marginTop: ".5rem" }}
-            disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
-        </button>
-
-            <div style={{ marginTop: "0.75rem", textAlign: "center", color: "var(--muted)" }}>
-            </div>
-        </form>
+            disabled={loading}
+            >
+                {loading ? "Entrando..." : "Entrar"}
+            </button>
+            </form>
+        </div>
     </div>
-</div>
-  );
+);
 }

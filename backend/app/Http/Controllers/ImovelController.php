@@ -14,7 +14,7 @@ class ImovelController extends Controller
     $tipo   = $r->string('tipo')->toString();
     $ordem  = $r->string('ordem')->toString();
 
-    // inteiros (Laravel 12: default é o 2º argumento)
+    // inteiros (Laravel 12: default Ã© o 2Âº argumento)
     $per  = $r->integer('per_page', 12);
     $page = $r->integer('page', 1);
 

@@ -23,7 +23,7 @@ class AuthController extends Controller
             'password' => Hash::make($data['password']),
         ]);
 
-        // faz login e gera cookie de sessão
+        // faz login e gera cookie de sessÃ£o
         Auth::login($user, true);
         $r->session()->regenerate();
 
@@ -38,7 +38,7 @@ class AuthController extends Controller
         ]);
 
         if (!Auth::attempt($cred, true)) {
-            return response()->json(['message' => 'Credenciais inválidas'], 422);
+            return response()->json(['message' => 'Credenciais invÃ¡lidas'], 422);
         }
         $r->session()->regenerate();
 

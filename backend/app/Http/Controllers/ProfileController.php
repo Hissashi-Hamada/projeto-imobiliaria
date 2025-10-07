@@ -39,14 +39,14 @@ class ProfileController extends Controller
             // E-mail simples (sem Notifications/Fila)
             try {
                 Mail::raw(
-                    "Você solicitou alterar seu e-mail. Confirme aqui: {$confirmationUrl}",
+                    "VocÃª solicitou alterar seu e-mail. Confirme aqui: {$confirmationUrl}",
                     function ($m) use ($user) {
                         $m->to($user->pending_email)
                           ->subject('Confirme seu novo e-mail');
                     }
                 );
             } catch (\Throwable $e) {
-                // Em dev, o link já vai na resposta — segue o jogo.
+                // Em dev, o link jÃ¡ vai na resposta â€” segue o jogo.
             }
         } else {
             $user->save();
@@ -54,9 +54,9 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => $emailChanged
-                ? 'Perfil salvo. Enviamos um link para confirmar o novo e-mail (veja também o link de dev na resposta).'
+                ? 'Perfil salvo. Enviamos um link para confirmar o novo e-mail (veja tambÃ©m o link de dev na resposta).'
                 : 'Perfil salvo.',
-            'confirmation_url' => $confirmationUrl, // útil em DEV sem SMTP
+            'confirmation_url' => $confirmationUrl, // Ãºtil em DEV sem SMTP
         ]);
     }
 
@@ -84,7 +84,7 @@ class ProfileController extends Controller
         $user = \App\Models\User::where('email_change_token', $token)->first();
 
         if (!$user) {
-            abort(404, 'Token inválido');
+            abort(404, 'Token invÃ¡lido');
         }
         if (!$user->email_change_expires_at || now()->greaterThan($user->email_change_expires_at)) {
             abort(410, 'Token expirado');
