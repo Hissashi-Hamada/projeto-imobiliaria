@@ -1,5 +1,12 @@
 ﻿import axios from "axios";
-export const api = axios.create({
+
+const api = axios.create({
   baseURL: "http://localhost:8000",
-  withCredentials: true, // envia/recebe cookies do Sanctum
+  withCredentials: true,
 });
+
+// garante nomes do CSRF do Laravel
+api.defaults.xsrfCookieName = "XSRF-TOKEN";
+api.defaults.xsrfHeaderName = "X-XSRF-TOKEN";
+
+export default api;

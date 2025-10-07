@@ -1,22 +1,27 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 
-Route::post('/register', [RegisteredUserController::class, 'store'])->name('register');
-// (quando fizer login, algo como: Route::post('/login', [...]);)
+// ===== LOGIN =====
+// Mostra o formulário de login
+Route::get('/login', [LoginController::class, 'create'])->name('login');
+// Processa o login
+Route::post('/login', [LoginController::class, 'store']);
 
+// ===== REGISTRO =====
+// Mostra o formulário de registro
+Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+// Processa o registro
+Route::post('/register', [RegisteredUserController::class, 'store']);
 
-// login por sessão (Sanctum SPA usa cookie)
-Route::post('/login', [LoginController::class, 'store'])->name('login');
-
-// logout
+// ===== LOGOUT =====
 Route::post('/logout', [LogoutController::class, 'destroy'])->name('logout');
 
-Route::get("/", function () {
-    return view("welcome");
+// ===== ÁREA PROTEGIDA =====
+Route::middleware('auth')->group(function () {
+    Route::get('/', function () {
+        return view('welcome'); // dashboard
+    })->name('dashboard');
 });
-
-
-

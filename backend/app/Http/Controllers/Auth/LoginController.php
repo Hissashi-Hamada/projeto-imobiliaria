@@ -24,3 +24,4 @@ class LoginController extends Controller
         return response()->json(['message' => 'invalid-credentials'], 422);
     }
 }
+    
