@@ -4,9 +4,15 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 
+
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->noContent();
+});
+
+
 // ===== LOGIN =====
 // Mostra o formulário de login
-Route::get('/login', [LoginController::class, 'create'])->name('login');
+// Route::get('/login', [LoginController::class, 'create'])->name('login');
 // Processa o login
 Route::post('/login', [LoginController::class, 'store']);
 
@@ -14,7 +20,7 @@ Route::post('/login', [LoginController::class, 'store']);
 // Mostra o formulário de registro
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
 // Processa o registro
-Route::post('/register', [RegisteredUserController::class, 'store']);
+Route::post('/register', [RegisteredUserController::class, 'store']); // <--- AQUI
 
 // ===== LOGOUT =====
 Route::post('/logout', [LogoutController::class, 'destroy'])->name('logout');

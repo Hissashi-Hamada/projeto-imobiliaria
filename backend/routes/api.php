@@ -2,11 +2,15 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ImovelController;
+use App\Http\Controllers\Auth\LoginController;
 
 // Retorna usuário logado (usado pelo frontend SPA)
 Route::middleware('auth:sanctum')->get('/me', function ($request) {
     return $request->user();
 });
+
+// Rotas login
+// Route::post('/login', [LoginController::class, 'store']);
 
 // ===== ROTAS DE PERFIL =====
 Route::middleware('auth:sanctum')->group(function () {
@@ -16,3 +20,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // ===== ROTAS DE IMÓVEIS =====
 Route::apiResource('imoveis', ImovelController::class);
+
+
+

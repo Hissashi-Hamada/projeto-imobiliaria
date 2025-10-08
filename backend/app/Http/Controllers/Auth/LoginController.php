@@ -10,6 +10,7 @@ class LoginController extends Controller
 {
     public function store(Request $request)
     {
+        var_dump('sadvsvsd');exit;
         $credentials = $request->validate([
             'email'    => ['required','email'],
             'password' => ['required'],

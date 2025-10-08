@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { maskCPF, maskPhone, maskDate } from "@/utils/masks";
 import { evaluatePassword } from "@/utils/passwordUtils";
+import api from "@/lib/api";
 import "@/styles/global.css";
 
 const inputStyle = {
@@ -45,64 +46,45 @@ export default function Register() {
     setForm(f => ({ ...f, [name]: value }));
   }
 
-  async function onSubmit(e) {
-    e.preventDefault();
-    setErr(""); setOk(false);
 
-    if (pwStrength.score < 2) return setErr("Senha muito fraca.");
-    if (form.password !== form.password_confirmation) return setErr("As senhas não coincidem.");
+async function onSubmit(e) {
+  e.preventDefault();
+  setErr(""); setOk(false);
 
-    try {
-      // 1) Handshake Sanctum (gera cookie XSRF)
-      await fetch(`${API_URL}/sanctum/csrf-cookie`, {
-        method: "GET",
-        credentials: "include",
-      });
+  if (pwStrength.score < 2) return setErr("Senha muito fraca.");
+  if (form.password !== form.password_confirmation) return setErr("As senhas não coincidem.");
 
-      // 2) POST /register (rota web, sem /api)
-      const resp = await fetch(`${API_URL}/register`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          password_confirmation: form.password_confirmation,
-          // Se quiser enviar os extras, só habilitar e tratar no backend:
-          // nascimento: form.nascimento,
-          // cpf: form.cpf,
-          // telefone: form.telefone,
-        }),
-      });
+  try {
+    // 1) CSRF cookie
+    await api.get("/sanctum/csrf-cookie");
 
-      if (!resp.ok) {
-        if (resp.status === 422) {
-          const data = await resp.json().catch(() => ({}));
-          // mostra primeira mensagem de validação
-          const firstError =
-            data?.errors && Object.values(data.errors)[0]?.[0]
-              ? Object.values(data.errors)[0][0]
-              : "Dados inválidos";
-          throw new Error(firstError);
-        }
-        if (resp.status === 419) {
-          throw new Error("Sessão expirada (CSRF). Tente novamente.");
-        }
-        throw new Error(`Erro ${resp.status}`);
-      }
+    // 2) POST /register (WEB, não /api)
+    await api.post("http://127.0.0.1:8000/register", {
+      name: form.name,
+      email: form.email,
+      password: form.password,
+      password_confirmation: form.password_confirmation,
+    });
 
-      setOk(true);
-      // Com Sanctum, não há token no localStorage — a sessão fica no cookie.
-      // Redireciona após sucesso:
-      window.location.href = "/imoveis";
-    } catch (e2) {
-      setErr(e2.message || "Erro ao cadastrar");
+    // 3) Confirma sessão
+    const { data: me } = await api.get("/api/me");
+
+    setOk(true);
+    window.location.href = "/imoveis";
+  } catch (err) {
+    if (err?.response?.status === 422) {
+      const first = err.response.data?.errors && Object.values(err.response.data.errors)[0]?.[0];
+      setErr(first || "Dados inválidos");
+      return;
     }
+    if (err?.response?.status === 419) {
+      setErr("Sessão expirada (CSRF). Tente novamente.");
+      return;
+    }
+    setErr(err?.response?.data?.message || `Erro ${err?.response?.status || ""}`.trim());
   }
+}
+
 
   return (
     <div className="auth-page" style={{ display:"grid", placeItems:"center", minHeight:"calc(100vh - 64px)", padding:"1rem" }}>
