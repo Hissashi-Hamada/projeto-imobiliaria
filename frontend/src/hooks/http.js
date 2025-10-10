@@ -1,12 +1,23 @@
+// src/lib/api.js
 import axios from "axios";
+
+function getCookie(name) {
+  const m = document.cookie.match(
+    new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)')
+  );
+  return m ? m[1] : null;
+}
+
 const api = axios.create({
-  baseURL: "http://localhost:8000", // sem /api aqui
-  withCredentials: true,
+  baseURL: "http://localhost:8000",
+  withCredentials: true
 });
-let gotCsrf = false;
-api.interceptors.request.use(async (config) => {
-  const needs = /post|put|patch|delete/i.test(config.method);
-  if (needs && !gotCsrf) { await api.get("/sanctum/csrf-cookie"); gotCsrf = true; }
+
+// Injeta o XSRF do cookie no cabeçalho esperado pelo Laravel
+api.interceptors.request.use((config) => {
+  const xsrf = getCookie("XSRF-TOKEN");
+  if (xsrf) config.headers["X-XSRF-TOKEN"] = decodeURIComponent(xsrf);
   return config;
 });
+
 export default api;

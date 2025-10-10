@@ -45,6 +45,13 @@ export default function Register() {
     setForm(f => ({ ...f, [name]: value }));
   }
 
+  function getCookie(name) {
+    return document.cookie
+      .split("; ")
+      .find(row => row.startsWith(`${name}=`))
+      ?.split("=")[1];
+  }
+
   async function onSubmit(e) {
     e.preventDefault();
     setErr(""); setOk(false);
@@ -60,22 +67,23 @@ export default function Register() {
       });
 
       // 2) POST /register (rota web, sem /api)
+      const xsrfToken = getCookie("XSRF-TOKEN");
       const resp = await fetch(`${API_URL}/register`, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
           "X-Requested-With": "XMLHttpRequest",
+          ...(xsrfToken ? { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) } : {}),
         },
         body: JSON.stringify({
           name: form.name,
           email: form.email,
           password: form.password,
           password_confirmation: form.password_confirmation,
-          // Se quiser enviar os extras, só habilitar e tratar no backend:
-          // nascimento: form.nascimento,
-          // cpf: form.cpf,
-          // telefone: form.telefone,
+          nascimento: form.nascimento,
+          cpf: form.cpf,
+          telefone: form.telefone,
         }),
       });
 
