@@ -8,6 +8,7 @@ export default function Profile() {
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [user, setUser] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -22,6 +23,7 @@ export default function Profile() {
     (async () => {
       try {
         const me = await api.profile();
+        setUser(me);
         setForm(f => ({
           ...f,
           name: me.name ?? "",
@@ -31,6 +33,7 @@ export default function Profile() {
         if (me.avatar) setAvatarPreview(me.avatar);
       } catch (e) {
         setErr("Faça login para acessar o perfil.");
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -69,14 +72,64 @@ export default function Profile() {
 
       await api.updateProfile(fd);
       setOk("Perfil atualizado com sucesso!");
+      setUser(u =>
+        u
+          ? {
+              ...u,
+              name: form.name,
+              email: form.email,
+              phone: form.phone,
+            }
+          : u
+      );
       setForm(f => ({ ...f, password: "", password_confirmation: "" }));
     } catch (e2) {
       setErr(e2.message || "Erro ao atualizar perfil.");
     }
   }
 
-  if (loading)
+  if (loading) {
     return <div style={{ textAlign: "center", padding: "3rem" }}>Carregando...</div>;
+  }
+
+  if (!user) {
+    return (
+      <div
+        className="auth-page"
+        style={{
+          display: "grid",
+          placeItems: "center",
+          minHeight: "calc(100vh - 64px)",
+          padding: "1rem",
+        }}
+      >
+        <div
+          className="card"
+          style={{
+            width: "min(420px, 90vw)",
+            background: "#fff",
+            border: "1px solid var(--border)",
+            borderRadius: "16px",
+            boxShadow: "var(--shadow)",
+            padding: "1.5rem",
+            textAlign: "center",
+          }}
+        >
+          <h2 style={{ marginTop: 0 }}>Você não está autenticado</h2>
+          <p style={{ color: "var(--muted)" }}>
+            {err || "Entre com sua conta para visualizar e editar o perfil."}
+          </p>
+          <a
+            href="/login"
+            className="btn-primary"
+            style={{ display: "inline-block", marginTop: "1rem", padding: "0.6rem 1.2rem" }}
+          >
+            Ir para login
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -112,6 +165,19 @@ export default function Profile() {
         <p style={{ marginTop: 0, color: "var(--muted)" }}>
           Edite suas informações e foto de perfil.
         </p>
+
+        <div
+          style={{
+            background: "rgba(46, 125, 50, 0.12)",
+            color: "#2e7d32",
+            padding: ".75rem",
+            borderRadius: 12,
+            fontWeight: 600,
+            marginBottom: ".75rem",
+          }}
+        >
+          Logado como <span>{user.name || user.email}</span>
+        </div>
 
         {err && <p style={{ color: "crimson" }}>{err}</p>}
         {ok && <p style={{ color: "seagreen" }}>{ok}</p>}

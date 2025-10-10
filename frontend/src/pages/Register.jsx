@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import useApi from "@/hooks/useApi";
 import { maskCPF, maskPhone, maskDate } from "@/utils/masks";
 import { evaluatePassword } from "@/utils/passwordUtils";
 import "@/styles/global.css";
@@ -13,10 +12,10 @@ const inputStyle = {
   padding: "0 12px"
 };
 
-export default function Register() {
-  const api = useApi();
+const API_URL = "http://localhost:8000"; // Laravel (php artisan serve --port=8000)
 
-  //state do form
+export default function Register() {
+  // state do form
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -32,7 +31,7 @@ export default function Register() {
   const [err, setErr] = useState("");
   const [ok, setOk] = useState(false);
 
-  //força da senha
+  // força da senha
   const pwStrength = useMemo(
     () => evaluatePassword(form.password || ""),
     [form.password]
@@ -46,6 +45,13 @@ export default function Register() {
     setForm(f => ({ ...f, [name]: value }));
   }
 
+  function getCookie(name) {
+    return document.cookie
+      .split("; ")
+      .find(row => row.startsWith(`${name}=`))
+      ?.split("=")[1];
+  }
+
   async function onSubmit(e) {
     e.preventDefault();
     setErr(""); setOk(false);
@@ -54,13 +60,52 @@ export default function Register() {
     if (form.password !== form.password_confirmation) return setErr("As senhas não coincidem.");
 
     try {
-      const res = await api.register({
-        name: form.name,
-        email: form.email,
-        password: form.password,
+      // 1) Handshake Sanctum (gera cookie XSRF)
+      await fetch(`${API_URL}/sanctum/csrf-cookie`, {
+        method: "GET",
+        credentials: "include",
       });
-      localStorage.setItem("token", res.token);
+
+      // 2) POST /register (rota web, sem /api)
+      const xsrfToken = getCookie("XSRF-TOKEN");
+      const resp = await fetch(`${API_URL}/register`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          ...(xsrfToken ? { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) } : {}),
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          password_confirmation: form.password_confirmation,
+          nascimento: form.nascimento,
+          cpf: form.cpf,
+          telefone: form.telefone,
+        }),
+      });
+
+      if (!resp.ok) {
+        if (resp.status === 422) {
+          const data = await resp.json().catch(() => ({}));
+          // mostra primeira mensagem de validação
+          const firstError =
+            data?.errors && Object.values(data.errors)[0]?.[0]
+              ? Object.values(data.errors)[0][0]
+              : "Dados inválidos";
+          throw new Error(firstError);
+        }
+        if (resp.status === 419) {
+          throw new Error("Sessão expirada (CSRF). Tente novamente.");
+        }
+        throw new Error(`Erro ${resp.status}`);
+      }
+
       setOk(true);
+      // Com Sanctum, não há token no localStorage — a sessão fica no cookie.
+      // Redireciona após sucesso:
       window.location.href = "/imoveis";
     } catch (e2) {
       setErr(e2.message || "Erro ao cadastrar");
@@ -76,22 +121,54 @@ export default function Register() {
         <h2 style={{ marginTop:0, marginBottom:".25rem" }}>Cadastro</h2>
         <p style={{ marginTop:0, color:"var(--muted)" }}>Crie sua conta para salvar favoritos e falar com o vendedor.</p>
 
-        <form onSubmit={onSubmit} id="registerForm" className="form">
+        <form onSubmit={onSubmit} id="registerForm" className="form" autoComplete="on">
           <div className="mb-3">
             <label>Nome</label>
-            <input name="name" placeholder="Seu nome completo" value={form.name} onChange={onChange} required style={inputStyle}/>
+            <input
+              name="name"
+              placeholder="Seu nome completo"
+              value={form.name}
+              onChange={onChange}
+              required
+              style={inputStyle}
+              autoComplete="name"
+              type="text"
+            />
           </div>
 
           <div className="mb-3">
             <label>Email</label>
-            <input type="email" name="email" placeholder="voce@exemplo.com" value={form.email} onChange={onChange} required style={inputStyle}/>
+            <input
+              type="email"
+              name="email"
+              placeholder="voce@exemplo.com"
+              value={form.email}
+              onChange={onChange}
+              required
+              style={inputStyle}
+              autoComplete="email"
+            />
           </div>
 
           <div className="mb-3">
             <label>Senha</label>
             <div style={{ position:"relative" }}>
-              <input type={showPw?"text":"password"} name="password" placeholder="Mínimo 8 caracteres" value={form.password} onChange={onChange} required style={inputStyle}/>
-              <button type="button" onClick={()=>setShowPw(v=>!v)} style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", border:"none", background:"transparent", color:"var(--primary)", cursor:"pointer" }}>
+              <input
+                type={showPw ? "text" : "password"}
+                name="password"
+                placeholder="Mínimo 8 caracteres"
+                value={form.password}
+                onChange={onChange}
+                required
+                style={inputStyle}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={()=>setShowPw(v=>!v)}
+                style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", border:"none", background:"transparent", color:"var(--primary)", cursor:"pointer" }}
+                aria-label={showPw ? "Ocultar senha" : "Mostrar senha"}
+              >
                 {showPw ? "Ocultar" : "Mostrar"}
               </button>
             </div>
@@ -104,8 +181,22 @@ export default function Register() {
           <div className="mb-3">
             <label>Confirmar senha</label>
             <div style={{ position:"relative" }}>
-              <input type={showPw2?"text":"password"} name="password_confirmation" placeholder="Repita a senha" value={form.password_confirmation} onChange={onChange} required style={inputStyle}/>
-              <button type="button" onClick={()=>setShowPw2(v=>!v)} style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", border:"none", background:"transparent", color:"var(--primary)", cursor:"pointer" }}>
+              <input
+                type={showPw2 ? "text" : "password"}
+                name="password_confirmation"
+                placeholder="Repita a senha"
+                value={form.password_confirmation}
+                onChange={onChange}
+                required
+                style={inputStyle}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={()=>setShowPw2(v=>!v)}
+                style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", border:"none", background:"transparent", color:"var(--primary)", cursor:"pointer" }}
+                aria-label={showPw2 ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
+              >
                 {showPw2 ? "Ocultar" : "Mostrar"}
               </button>
             </div>
@@ -113,21 +204,52 @@ export default function Register() {
 
           <div className="mb-3">
             <label>Data de nascimento</label>
-            <input type="text" name="nascimento" placeholder="DD/MM/AAAA" value={form.nascimento} onChange={onChange} style={inputStyle}/>
+            <input
+              type="text"
+              name="nascimento"
+              placeholder="DD/MM/AAAA"
+              value={form.nascimento}
+              onChange={onChange}
+              style={inputStyle}
+              autoComplete="bday"
+              inputMode="numeric"
+            />
           </div>
+
           <div className="mb-3">
             <label>CPF</label>
-            <input type="text" name="cpf" placeholder="000.000.000-00" value={form.cpf} onChange={onChange} style={inputStyle}/>
+            <input
+              type="text"
+              name="cpf"
+              placeholder="000.000.000-00"
+              value={form.cpf}
+              onChange={onChange}
+              style={inputStyle}
+              autoComplete="off"
+              inputMode="numeric"
+            />
           </div>
+
           <div className="mb-3">
             <label>Telefone</label>
-            <input type="text" name="telefone" placeholder="(11) 90000-0000" value={form.telefone} onChange={onChange} style={inputStyle}/>
+            <input
+              type="tel"
+              name="telefone"
+              placeholder="(11) 90000-0000"
+              value={form.telefone}
+              onChange={onChange}
+              style={inputStyle}
+              autoComplete="tel"
+              inputMode="tel"
+            />
           </div>
 
           {err && <p style={{ color:"crimson" }}>{err}</p>}
           {ok  && <p style={{ color:"seagreen" }}>Cadastro realizado!</p>}
 
-          <button type="submit" className="btn-primary" style={{ width:"100%", height:44, marginTop:".5rem" }}>Registrar</button>
+          <button type="submit" className="btn-primary" style={{ width:"100%", height:44, marginTop:".5rem" }}>
+            Registrar
+          </button>
         </form>
       </div>
     </div>

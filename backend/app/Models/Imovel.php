@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Imovel extends Model
 {
@@ -15,4 +16,9 @@ class Imovel extends Model
         'cep','estado','cidade','bairro','logradouro','numero','complemento',
         'lat','lng','published_at','user_id',
     ];
+
+    public function imagens(): HasMany
+    {
+        return $this->hasMany(ImovelImage::class)->orderBy('ordem');
+    }
 }

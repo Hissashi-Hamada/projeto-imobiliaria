@@ -8,7 +8,7 @@ export default function Navbar(){
       <div className="navbar-inner">
         <div className="brand">
           <span className="dot" />
-          <span>Imobiliária Demo</span>
+          <span>Tavares Coretora De Imoveis </span>
         </div>
         <nav className="nav-links">
           <Link className="nav-link" to="/imoveis"  aria-current={pathname.startsWith("/imoveis")?"page":undefined}>Vitrine</Link>
