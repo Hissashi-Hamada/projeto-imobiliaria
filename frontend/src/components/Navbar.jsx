@@ -13,8 +13,8 @@ export default function Navbar(){
         <nav className="nav-links">
           <Link className="nav-link" to="/imoveis"  aria-current={pathname.startsWith("/imoveis")?"page":undefined}>Vitrine</Link>
           <Link className="nav-link" to="/profile"  aria-current={pathname==="/profile"?"page":undefined}>Meu Perfil</Link>
-          <Link className="nav-link" to="/login"    aria-current={pathname==="/login"?"page":undefined}>Login</Link>
-          <Link className="nav-link" to="/register" aria-current={pathname==="/register"?"page":undefined}>Registrar</Link>
+          <Link className="nav-link" to="/login"    aria-current={pathname==="/login"?"page":undefined}>Logar-se</Link>
+          <Link className="nav-link" to="/register" aria-current={pathname==="/register"?"page":undefined}>Registrar-se</Link>
         </nav>
       </div>
     </header>
