@@ -1,40 +1,10 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import hero from "@/assets/casa-de-madeira-fotorrealista-com-estrutura-de-madeira.jpg";
 import "@/styles/pages/vitrine.css";
-import { me } from "@/services/auth";
+import useAuth from '@/hooks/useAuth';
 
 export default function Vitrine() {
-  const [user, setUser] = useState(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return JSON.parse(window.localStorage.getItem("user") ?? "null");
-    } catch (_) {
-      return null;
-    }
-  });
-
-  useEffect(() => {
-    let mounted = true;
-    me()
-      .then((u) => {
-        if (!mounted) return;
-        setUser(u);
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem("user", JSON.stringify(u));
-        }
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setUser(null);
-        if (typeof window !== "undefined") {
-          window.localStorage.removeItem("user");
-        }
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const { user } = useAuth();
 
   const podeCriar = !!user && (user.is_admin || user.role === "admin");
 
