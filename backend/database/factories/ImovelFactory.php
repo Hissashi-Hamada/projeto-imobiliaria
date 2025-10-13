@@ -12,6 +12,8 @@ class ImovelFactory extends Factory
 
     public function definition(): array
     {
+        $cepNumber = str_pad((string) $this->faker->numberBetween(0, 99999999), 8, '0', STR_PAD_LEFT);
+
         return [
             'titulo'   => $this->faker->sentence(3),
             'slug'     => $this->faker->unique()->slug(),
@@ -25,7 +27,7 @@ class ImovelFactory extends Factory
             'suites'     => $this->faker->numberBetween(0, 3),
             'banheiros'  => $this->faker->numberBetween(1, 4),
             'vagas'      => $this->faker->numberBetween(0, 3),
-            'cep'        => $this->faker->postcode(),
+            'cep'        => substr($cepNumber, 0, 5) . '-' . substr($cepNumber, 5),
             'estado'     => $this->faker->randomElement(['SP','RJ','MG','RS','PR']),
             'cidade'     => $this->faker->city(),
             'bairro'     => $this->faker->streetName(),
