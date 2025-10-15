@@ -168,7 +168,7 @@ export default function Profile() {
 
         <div
           style={{
-            background: "rgba(46, 125, 50, 0.12)",
+            background: "rgba(15, 228, 26, 0.12)",
             color: "#2e7d32",
             padding: ".75rem",
             borderRadius: 12,
