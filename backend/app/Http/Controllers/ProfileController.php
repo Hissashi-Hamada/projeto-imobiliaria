@@ -42,7 +42,7 @@ class ProfileController extends Controller
                     "VocÃª solicitou alterar seu e-mail. Confirme aqui: {$confirmationUrl}",
                     function ($m) use ($user) {
                         $m->to($user->pending_email)
-                          ->subject('Confirme seu novo e-mail');
+                            ->subject('Confirme seu novo e-mail');
                     }
                 );
             } catch (\Throwable $e) {
