@@ -6,11 +6,20 @@ import Profile from "@/pages/Profile";
 import Register from "@/pages/Register";
 import Login from "@/pages/Login"; // crie depois, se ainda não existir
 import Navbar from "@/components/Navbar";
+import useAuth from '@/hooks/useAuth';
 
 export default function App(){
+  const { user, isAuthenticated, isAdmin, authChecked, logout } = useAuth();
+
   return (
     <>
-      <Navbar />
+      <Navbar
+        isAuthenticated={isAuthenticated}
+        authChecked={authChecked}
+        isAdmin={isAdmin}
+        userName={user?.name}
+        onLogout={logout}
+      />
       <Routes>
         <Route path="/" element={<Navigate to="/imoveis" replace/>}/>
         <Route path="/imoveis" element={<Vitrine/>}/>
